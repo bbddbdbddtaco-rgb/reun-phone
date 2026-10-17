@@ -350,7 +350,22 @@ closeEngineCall=function(reason='manual'){const s=engineSession;const shouldFoll
 render();
 
 </script>
-</body></html>
+<script>
+/* One canonical conversation, displayed from each phone owner's perspective. */
+const pairOwner=config.owner,pairOther=pairOwner==='왼'?'른':'왼',pairKey='reun-pair-dialogue-v1';
+function pairDecode(items){return items.filter(m=>m&&typeof m.text==='string'&&['왼','른'].includes(m.speaker)).map(m=>({who:m.speaker===pairOwner?'me':'wen',text:m.text,t:m.t||''}));}
+const pairBaseSave=saveWenMessages;
+saveWenMessages=function(){pairBaseSave();writePhoneStorage(pairKey,wenMessages.filter(m=>typeof m.text==='string'&&m.text).map(m=>({speaker:m.who==='me'?pairOwner:pairOther,text:m.text,t:m.t})).slice(-150));};
+const sharedPair=readPhoneStorage(pairKey,null);
+if(Array.isArray(sharedPair)&&sharedPair.length)wenMessages=pairDecode(sharedPair);
+else if(pairOwner==='왼'){const otherHistory=readPhoneStorage('reun-wen-chat-v1',null);const original=Array.isArray(otherHistory)&&otherHistory.length?otherHistory:[{who:'wen',text:'야ㅋㅋ 너 아까 계단에서 헛발질한 거 봤다.',t:'12:01'},{who:'me',text:'네 신발끈이나 봐. 한쪽 풀렸다.',t:'12:01'},{who:'wen',text:'안 풀렸는데?',t:'12:02'},{who:'me',text:'낚였다ㅋㅋㅋㅋ',t:'12:02'},{who:'wen',text:'아 쫌ㅋㅋ 너 거기 서 봐.',t:'12:02'}];wenMessages=original.map(m=>({...m,who:m.who==='me'?'wen':'me'}));}
+saveWenMessages();
+window.addEventListener('storage',event=>{if(event.key!==pairKey||!event.newValue)return;try{const items=JSON.parse(event.newValue);if(!Array.isArray(items))return;if(wenReplyTimer)clearTimeout(wenReplyTimer);wenPending=false;wenMessages=pairDecode(items);pairBaseSave();if(view==='kakao'||view==='kakaochat')render();}catch{}});
+const pairBaseRender=render;
+render=function(){pairBaseRender();if(view!=='home')return;const page=root.querySelector('.page');if(!page||page.querySelector('.pair-switch'))return;const link=document.createElement('a');link.className='pair-switch';link.href=pairOwner==='왼'?'./':'wen.html';link.textContent=pairOwner+'의 휴대폰 · '+pairOther+'의 폰 보기 ↗';link.style.cssText='display:block;color:inherit;text-decoration:none;font-size:12px;margin:0 0 12px;padding:8px 12px;background:#0008;border:1px solid #ffffff50;border-radius:14px;width:max-content';page.prepend(link);};
+render();
+
+</script></body></html>
 
 <!-- Gallery images: unique user-submitted photos only; character illustrations excluded. -->
 
