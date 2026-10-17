@@ -326,6 +326,31 @@ if(wenMessages.length===1&&Object.hasOwn(oldWenLines,wenMessages[0].text))wenMes
 const oldSms=smsThreads['왼'];if(oldSms?.length===3&&oldSms[0].text==='른아 나 보고 싶었어? ㅋㅋ'&&oldSms[1].text==='숙제하고 있었거든.')smsThreads['왼']=[{who:'them',text:'야ㅋㅋ 너 아까 계단에서 헛발질한 거 봤다.',t:'12:01'},{who:'me',text:'네 신발끈이나 봐. 풀렸다.',t:'12:01'},{who:'them',text:'안 풀렸는데?',t:'12:02'},{who:'me',text:'낚였다ㅋㅋ 바보.',t:'12:02'}];
 const toneBaseRender=render;render=function(){toneBaseRender();if(view==='chat'&&detail===0){const buttons=['네가 더 바보거든ㅋㅋ','숙제나 해, 감자야.','내일 지각하면 바보다.'];const e=document.querySelector('.sms-quickreplies');if(e)e.innerHTML=buttons.map(t=>`<button ${smsPending['왼']?'disabled':''} onclick="sendSmsText('${t}')">${esc(t)}</button>`).join('')}};saveWenMessages();saveSms();render();
 
-</script></body></html>
+</script><script>
+/* Eight approved childhood-friend exchanges, with contextual chat turns. */
+const approvedBanterScenes=[{"id":"banter-homework","lines":[["왼","답 알려줄까?"],["른","어."],["왼","__BRO_TEASE__"],["른","죽을래?"],["왼","__OTHER_BRO__"],["른","죽는 방법 고르라는 뜻이었는데."],["왼","ㅋㅋㅋㅋㅋㅋ 3번이야."],["른","서술형인데."],["왼","아."]],"abrupt":false,"followup":false},{"id":"banter-nothing","lines":[["왼","야."],["른","왜."],["왼","아무것도 아님."],["른","끊어."],["왼","잠깐잠깐 중요한 거 있음."],["른","뭔데."],["왼","메롱."],["른","…너 지금 창문 열려 있지."],["왼","왜."],["른","잘 들어 봐."],["왼","야 밖에서 메롱 하지 마ㅋㅋㅋㅋ"]],"abrupt":true,"followup":false},{"id":"banter-laugh","lines":[["왼","너 웃으면 나한테 천 원."],["른","네 얼굴 안 보면 되겠네."],["왼","시작도 안 했는데 공격하네."],["른","풉."],["왼","웃었다. 천 원."],["른","방귀 소린데."],["왼","입으로 방귀를 왜 뀌어ㅋㅋㅋㅋ"],["른","너도 웃었다. 퉁."]],"abrupt":false,"followup":false},{"id":"banter-wrong","lines":[["왼","걔 진짜 바보 같지 않냐."],["른","누구."],["왼","아 잘못 보냄."],["른","누구냐고."],["왼","너한테 보내면 안 되는 건데ㅋㅋ"],["른","나도 걔 별로임."],["왼","누군 줄 알고."],["른","너."],["왼","야ㅋㅋㅋㅋㅋㅋ"]],"abrupt":false,"followup":false},{"id":"banter-store","lines":[["왼","편의점 갈 건데 필요한 거."],["른","아이스크림."],["왼","무슨 맛."],["른","네 돈 맛."],["왼","품절입니다."],["른","그럼 네 카드 맛."],["왼","가게 문 닫았습니다."],["른","사장 나와."],["왼","ㅋㅋㅋㅋ 아 무슨 맛이냐고."]],"abrupt":false,"followup":false},{"id":"banter-sleep","lines":[["왼","자냐?"],["른","응."],["왼","자는데 답장을 하네."],["른","자동 응답입니다."],["왼","른은 바보."],["른","넌 더 바보."],["왼","자동 응답 성질 더럽네ㅋㅋ"],["른","고객님 차단 도와드리겠습니다."]],"abrupt":false,"followup":false},{"id":"banter-gift","lines":[["왼","눈 감아 봐."],["른","싫어."],["왼","선물 줄 건데."],["른","벌레면 너 먹인다."],["왼","…눈 떠."],["른","뭔데. 손 펴."],["왼","아니 선물 취소야ㅋㅋ 놔."],["른","손. 펴."]],"abrupt":true,"followup":false},{"id":"banter-hangup","lines":[["왼","할 말 다 했으면 끊어."],["른","네가 끊어."],["왼","먼저 끊는 사람이 바보."],["른","응."]],"abrupt":true,"followup":true}];
+for(const direction of ['outgoing','incoming']){const pool=direction==='outgoing'?wenOutgoingScenes:wenIncomingScenes;const old=pool.findIndex(s=>s.id===(direction==='outgoing'?'out-homework':'in-homework'));if(old>=0)pool.splice(old,1);for(const s of approvedBanterScenes)pool.push({...s,id:s.id+'-'+direction});}
+const approvedBasePick=pickCallScene;
+pickCallScene=function(i,direction){const s=approvedBasePick(i,direction);if(i!==0)return s;const first=s.lines.find(([who,text])=>who==='왼'&&/^(오빠라고|형이라고) 하면 알려줌$/.test(text));return {...s,lines:s.lines.map(([who,text])=>[who,text==='__OTHER_BRO__'?(first?.[1].startsWith('오빠')?'형도 가능.':'오빠도 가능.'):text])}};
+let approvedChatTurn=null,approvedFollowupPending=false;
+const approvedBaseReply=wenReplyFor,approvedBaseSuggestions=chatSuggestions;
+function resolveBanterLines(scene){const tease=randomBrotherTease();return scene.lines.map(([who,text])=>[who,text==='__BRO_TEASE__'?tease:text==='__OTHER_BRO__'?(tease.startsWith('오빠')?'형도 가능.':'오빠도 가능.'):text]);}
+function advanceApprovedChat(){const state=approvedChatTurn,out=[];while(state&&state.at<state.lines.length&&state.lines[state.at][0]==='왼')out.push(state.lines[state.at++][1]);if(state&&state.at>=state.lines.length)approvedChatTurn=null;return out;}
+wenReplyFor=function(text){const compact=text.replace(/\s|[.!?。…]/g,'');if(approvedFollowupPending&&/바보랑통화안함/.test(compact)){approvedFollowupPending=false;return ['네가 먼저 끊었잖아ㅋㅋㅋㅋ'];}if(approvedChatTurn){const expected=approvedChatTurn.lines[approvedChatTurn.at];if(expected&&compact===expected[1].replace(/\s|[.!?。…]/g,'')){approvedChatTurn.at++;return advanceApprovedChat();}approvedChatTurn=null;}
+const triggers=[['homework',/답알려|숙제답|문제답/],['nothing',/용건|왜불렀|왜전화/],['laugh',/웃음참|웃으면|천원/],['wrong',/잘못보|걔누구/],['store',/편의점|아이스크림/],['sleep',/자냐|자는척|자동응답/],['gift',/선물|눈감/],['hangup',/먼저끊|전화끊/]];
+const found=triggers.find(([,pattern])=>pattern.test(compact));if(!found)return approvedBaseReply(text);const scene=approvedBanterScenes.find(s=>s.id==='banter-'+found[0]);approvedChatTurn={lines:resolveBanterLines(scene),at:0};return advanceApprovedChat();};
+chatSuggestions=function(){if(approvedFollowupPending)return ['바보랑 통화 안 함.','ㅋㅋㅋㅋ 네가 바보.','다시 걸어 봐.'];if(approvedChatTurn){const next=approvedChatTurn.lines[approvedChatTurn.at];if(next?.[0]==='른')return [next[1],'메롱ㅋㅋ 나 잡아 봐.','다른 얘기 하자ㅋㅋ'];}return approvedBaseSuggestions();};
+// Chat may return a single line; keep the existing two-stage animation without empty bubbles.
+const approvedBaseSend=sendWenMessage;
+sendWenMessage=function(text){const before=wenReplyFor;wenReplyFor=function(value){const replies=before(value);return replies.length===1?[replies[0], '']:replies;};try{return approvedBaseSend(text);}finally{wenReplyFor=before;}};
+const approvedBaseSave=saveWenMessages;
+saveWenMessages=function(){for(let i=wenMessages.length-1;i>=0;i--)if(wenMessages[i].who==='wen'&&!wenMessages[i].text)wenMessages.splice(i,1);return approvedBaseSave();};
+const approvedBaseClose=closeEngineCall;
+closeEngineCall=function(reason='manual'){const s=engineSession;const shouldFollow=s&&s.caller===0&&s.phase==='active'&&s.scene.followup&&s.visibleLines>=s.scene.lines.length;const result=approvedBaseClose(reason);if(shouldFollow)setTimeout(()=>{wenMessages.push({who:'wen',text:'야 진짜 끊냐?',t:time()});approvedFollowupPending=true;saveWenMessages();if(view==='kakao'||view==='kakaochat')render();},1900);return result;};
+render();
+
+</script>
+</body></html>
 
 <!-- Gallery images: unique user-submitted photos only; character illustrations excluded. -->
+
